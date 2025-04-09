@@ -41,7 +41,7 @@ abstract class CreativeInventoryScreenMixin extends HandledScreen<CreativeScreen
 		addSelectableChild(unlocksButton);
 	}
 
-	@Inject(method = "render", at = @At(value = "FIELD", target = "statusEffectsDisplay:Lnet/minecraft/client/gui/screen/ingame/StatusEffectsDisplay;", opcode = Opcodes.GETFIELD))
+	@Inject(method = "render", at = @At(value = "FIELD", target = "Lnet/minecraft/client/gui/screen/ingame/CreativeInventoryScreen;statusEffectsDisplay:Lnet/minecraft/client/gui/screen/ingame/StatusEffectsDisplay;", opcode = Opcodes.GETFIELD))
 	private void renderUnlocksButton(DrawContext context, int mouseX, int mouseY, float deltaTicks, CallbackInfo call) {
 		if (getSelectedItemGroup().getType() == Type.INVENTORY) {
 			unlocksButton.visible = true;
