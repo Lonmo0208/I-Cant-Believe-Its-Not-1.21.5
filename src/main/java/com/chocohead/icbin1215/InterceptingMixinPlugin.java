@@ -1,4 +1,4 @@
-package com.chocohead.drummondmill;
+package com.chocohead.icbin1215;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -25,7 +25,7 @@ import org.spongepowered.asm.util.Annotations;
 
 import net.fabricmc.loader.api.FabricLoader;
 
-import com.chocohead.drummondmill.MixinFinder.Mixin;
+import com.chocohead.icbin1215.MixinFinder.Mixin;
 
 public class InterceptingMixinPlugin implements IMixinConfigPlugin {
 	private @interface From {

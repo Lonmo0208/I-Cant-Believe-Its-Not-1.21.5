@@ -1,4 +1,4 @@
-package com.chocohead.drummondmill;
+package com.chocohead.icbin1215;
 
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.CLASS;

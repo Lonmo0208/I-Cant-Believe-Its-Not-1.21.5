@@ -1,4 +1,4 @@
-package com.chocohead.drummondmill.mixin.compat.puzzleslib;
+package com.chocohead.icbin1215.mixin.compat.architectury;
 
 import java.util.List;
 
@@ -15,20 +15,20 @@ import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.world.World;
 import net.minecraft.world.dimension.DimensionType;
 
-import com.chocohead.drummondmill.InterceptingMixin;
-import com.chocohead.drummondmill.PlacatingSurrogate;
-import com.chocohead.drummondmill.Shim;
+import com.chocohead.icbin1215.InterceptingMixin;
+import com.chocohead.icbin1215.PlacatingSurrogate;
+import com.chocohead.icbin1215.Shim;
 
 @Mixin(ClientWorld.class)
-@InterceptingMixin(value = "fuzs/puzzleslib/fabric/mixin/client/ClientLevelFabricMixin", from = "puzzleslib")
+@InterceptingMixin(value = "dev/architectury/mixin/fabric/client/MixinClientLevel", from = "architectury")
 abstract class ClientWorldMixin {
 	@PlacatingSurrogate
-    private void init(ClientPlayNetworkHandler networkHandler, Properties properties, RegistryKey<World> key, RegistryEntry<DimensionType> type, int loadDistance,
+    private void construct(ClientPlayNetworkHandler networkHandler, Properties properties, RegistryKey<World> key, RegistryEntry<DimensionType> type, int loadDistance,
     		int simulationDistance, WorldRenderer renderer, boolean debugWorld, long seed, int seaLevel, List<WorldEffect> list, List<WorldEffect> list2, CallbackInfo call) {
-		init(networkHandler, properties, key, type, loadDistance, simulationDistance, renderer, debugWorld, seed, seaLevel, call);
+		construct(networkHandler, properties, key, type, loadDistance, simulationDistance, renderer, debugWorld, seed, seaLevel, call);
     }
 
 	@Shim
-	public native void init(ClientPlayNetworkHandler networkHandler, Properties properties, RegistryKey<World> key, RegistryEntry<DimensionType> type,
+	public native void construct(ClientPlayNetworkHandler networkHandler, Properties properties, RegistryKey<World> key, RegistryEntry<DimensionType> type,
 			int loadDistance, int simulationDistance, WorldRenderer renderer, boolean debugWorld, long seed, int seaLevel, CallbackInfo call);
 }

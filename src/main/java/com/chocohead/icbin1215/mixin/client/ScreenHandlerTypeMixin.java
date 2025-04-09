@@ -1,4 +1,4 @@
-package com.chocohead.drummondmill.mixin.client;
+package com.chocohead.icbin1215.mixin.client;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

@@ -1,4 +1,4 @@
-package com.chocohead.drummondmill.mixin;
+package com.chocohead.icbin1215.mixin;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
