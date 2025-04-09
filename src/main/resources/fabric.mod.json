@@ -1,0 +1,35 @@
+{
+	"schemaVersion": 1,
+	"id": "drummond-mill",
+	"version": "${version}",
+
+	"name": "I Can't Believe It's Not 1.21.5",
+	"description": "Making Craftmine look a lot more like 1.21.5 to mods",
+	"authors": [
+		"Chocohead"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "MPL-2.0",
+	"icon": "assets/drummond-mill/icon.png",
+
+	"environment": "*",
+	"entrypoints": {
+		"mm:early_risers": [
+			"com.chocohead.drummondmill.InsertConstructors"
+		],
+		"mixinsquared-adjuster": [
+			"com.chocohead.drummondmill.FixBrokenTargets"
+		]
+	},
+	"mixins": [
+		"drummond-mill.mixins.json"
+	],
+	"depends": {
+		"java": ">=21",
+		"fabricloader": ">=0.16.11",
+		"minecraft": "1.21.6-alpha.25.14.craftmine"
+	}
+}

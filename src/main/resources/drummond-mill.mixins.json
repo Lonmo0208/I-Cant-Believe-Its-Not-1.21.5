@@ -1,0 +1,25 @@
+{
+	"required": true,
+	"package": "com.chocohead.drummondmill.mixin",
+	"plugin": "com.chocohead.drummondmill.InterceptingMixinPlugin",
+	"compatibilityLevel": "JAVA_21",
+	"injectors": {
+		"defaultRequire": 1
+	},
+	"mixins": [
+		"ChunkRegionMixin",
+		"LivingEntityMixin",
+		"MinecraftServerMixin",
+		"ServerCommonNetworkHandlerMixin",
+		"ServerPlayerEntityMixin",
+		"ServerWorldMixin",
+		"WorldMixin"
+	],
+	"client": [
+		"client.CreativeInventoryScreenMixin",
+		"client.GameTabMixin",
+		"client.ScreenHandlerTypeMixin",
+		"compat.architectury.ClientWorldMixin",
+		"compat.puzzleslib.ClientWorldMixin"
+	]
+}
