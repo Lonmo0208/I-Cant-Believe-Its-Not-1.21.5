@@ -10,11 +10,14 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.LocalVariableNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.VarInsnNode;
 
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
@@ -112,7 +115,27 @@ public class InterceptingMixinPlugin implements IMixinConfigPlugin {
 		ClassNode thisMixin = Mixin.create(mixinInfo).getClassNode();
 
 		AnnotationNode interception = Annotations.getInvisible(thisMixin, InterceptingMixin.class);
-		if (interception == null) return; //Nothing to do for this particular Mixin
+		if (interception == null) {
+			for (MethodNode method : targetClass.methods) {
+				if (Annotations.getInvisible(method, ButStatic.class) != null) {
+					method.access |= Opcodes.ACC_STATIC;
+
+					for (AbstractInsnNode insn : method.instructions) {
+						if (insn.getType() == AbstractInsnNode.VAR_INSN) {
+							((VarInsnNode) insn).var--;
+						}
+					}
+
+					for (Iterator<LocalVariableNode> it = method.localVariables.iterator(); it.hasNext();) {
+						if (it.next().index-- == 0) {
+							it.remove();
+						}
+					}
+				}
+			}
+
+			return; //Nothing more to do for this particular Mixin
+		}
 
 		Mixin interceptionMixin = findMixin(targetClassName, Annotations.getValue(interception));
 		Map<String, String> shims = thisMixin.methods.stream().filter(method -> Annotations.getInvisible(method, Shim.class) != null).collect(Collectors.toMap(method -> method.name.concat(method.desc), method -> {

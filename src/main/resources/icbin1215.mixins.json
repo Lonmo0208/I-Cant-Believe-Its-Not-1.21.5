@@ -12,6 +12,7 @@
 		"InventoryScreenAccessor",
 		"LivingEntityMixin",
 		"MinecraftServerMixin",
+		"RegistryEntryListMixin",
 		"ServerCommonNetworkHandlerMixin",
 		"ServerPlayerEntityMixin",
 		"ServerWorldMixin",
