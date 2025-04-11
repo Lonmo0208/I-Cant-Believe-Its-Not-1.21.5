@@ -7,13 +7,16 @@
 		"defaultRequire": 1
 	},
 	"mixins": [
+		"BiomeMixin",
 		"ChunkRegionMixin",
+		"InventoryScreenAccessor",
 		"LivingEntityMixin",
 		"MinecraftServerMixin",
 		"ServerCommonNetworkHandlerMixin",
 		"ServerPlayerEntityMixin",
 		"ServerWorldMixin",
-		"WorldMixin"
+		"WorldMixin",
+		"compat.architectury.PlayerManagerMixin"
 	],
 	"client": [
 		"client.CreativeInventoryScreenMixin",

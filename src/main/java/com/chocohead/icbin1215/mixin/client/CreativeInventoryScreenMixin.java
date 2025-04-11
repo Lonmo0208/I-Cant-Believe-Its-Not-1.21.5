@@ -22,8 +22,10 @@ import net.minecraft.util.Identifier;
 
 import net.fabricmc.fabric.api.client.itemgroup.v1.FabricCreativeInventoryScreen;
 
+import com.chocohead.icbin1215.mixin.InventoryScreenAccessor;
+
 @Mixin(CreativeInventoryScreen.class)
-abstract class CreativeInventoryScreenMixin extends HandledScreen<CreativeScreenHandler> implements FabricCreativeInventoryScreen {
+abstract class CreativeInventoryScreenMixin extends HandledScreen<CreativeScreenHandler> implements FabricCreativeInventoryScreen, InventoryScreenAccessor {
 	@Unique
 	private final ButtonWidget unlocksButton = TextIconButtonWidget.builder(UnlocksScreen.field_59413, button -> {
 		client.setScreen(new UnlocksScreen(client.player.networkHandler.getUnlockHandler(), this));
@@ -34,6 +36,11 @@ abstract class CreativeInventoryScreenMixin extends HandledScreen<CreativeScreen
 
 	private CreativeInventoryScreenMixin() {
 		super(null, null, null);
+	}
+
+	@Override
+	public ButtonWidget getField_59329() {
+		return unlocksButton;
 	}
 
 	@Inject(method = "init", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/ingame/HandledScreen;init()V", shift = Shift.AFTER))

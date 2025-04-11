@@ -23,6 +23,14 @@ repositories {
 			includeGroup 'com.github.bawnorton.mixinsquared'
 		}
 	}
+	maven {
+		url = 'https://maven.shedaniel.me'
+		content {
+			includeGroup 'me.shedaniel'
+			includeGroup 'me.shedaniel.cloth'
+			includeGroup 'dev.architectury'
+		}
+	}
 }
 
 dependencies {
@@ -33,6 +41,7 @@ dependencies {
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 	include modImplementation("com.github.Chocohead:Fabric-ASM:${project.fabric_asm_version}")
 	include implementation("com.github.bawnorton.mixinsquared:mixinsquared-fabric:${project.mixin_squared_version}")
+	modCompileOnly "me.shedaniel:RoughlyEnoughItems-api-fabric:${project.rei_version}"
 }
 
 processResources {

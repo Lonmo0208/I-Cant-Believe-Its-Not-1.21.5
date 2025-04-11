@@ -22,6 +22,9 @@
 		],
 		"mixinsquared-adjuster": [
 			"com.chocohead.icbin1215.FixBrokenTargets"
+		],
+		"rei_client": [
+			"com.chocohead.icbin1215.compat.REIPlugin" 
 		]
 	},
 	"mixins": [

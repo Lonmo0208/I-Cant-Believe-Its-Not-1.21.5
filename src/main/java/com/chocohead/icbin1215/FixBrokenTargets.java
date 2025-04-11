@@ -101,6 +101,22 @@ public class FixBrokenTargets implements MixinAnnotationAdjuster {
 			});
 			break;
 		}
+		case "dev.architectury.mixin.fabric.MixinPlayerList": {
+			if (!annotation.is(Inject.class)) break; //Some other kind of injector
+			AdjustableInjectNode inject = annotation.as(AdjustableInjectNode.class);
+			if (!inject.getMethod().contains("respawn")) break; //Some other injection
+
+			annotation = inject.withMethod(methods -> {
+				assert methods.size() == 1: methods;
+				String method = methods.get(0);
+
+				assert "respawn".equals(method): method;
+				methods.set(0, applyRefmap(targetClasses, mixinClass, method).replace(";)", ";Ljava/util/Optional;)"));
+
+				return methods;
+			});
+			break;
+		}
 		}
 
 		return annotation;
