@@ -2,7 +2,7 @@
 	"required": true,
 	"package": "com.chocohead.icbin1215.mixin",
 	"plugin": "com.chocohead.icbin1215.InterceptingMixinPlugin",
-	"compatibilityLevel": "JAVA_21",
+	"compatibilityLevel": "JAVA_8",
 	"injectors": {
 		"defaultRequire": 1
 	},
@@ -16,14 +16,11 @@
 		"ServerCommonNetworkHandlerMixin",
 		"ServerPlayerEntityMixin",
 		"ServerWorldMixin",
-		"WorldMixin",
-		"compat.architectury.PlayerManagerMixin"
+		"WorldMixin"
 	],
 	"client": [
 		"client.CreativeInventoryScreenMixin",
 		"client.GameTabMixin",
-		"client.ScreenHandlerTypeMixin",
-		"compat.architectury.ClientWorldMixin",
-		"compat.puzzleslib.ClientWorldMixin"
+		"client.ScreenHandlerTypeMixin"
 	]
 }

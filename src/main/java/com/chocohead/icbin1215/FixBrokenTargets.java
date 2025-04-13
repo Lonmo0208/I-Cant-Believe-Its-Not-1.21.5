@@ -1,21 +1,21 @@
 package com.chocohead.icbin1215;
 
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import java.util.List;
-import java.util.Set;
-import java.util.function.UnaryOperator;
+import java.util.Optional;
 
-import org.apache.commons.lang3.reflect.FieldUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.reflect.MethodUtils;
 
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.AnnotationNode;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.LocalVariableNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.VarInsnNode;
 
-import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.transformer.ClassInfo;
-import org.spongepowered.asm.util.Annotations;
 
 import com.bawnorton.mixinsquared.adjuster.tools.AdjustableAnnotationNode;
 import com.bawnorton.mixinsquared.adjuster.tools.AdjustableAtNode;
@@ -23,81 +23,94 @@ import com.bawnorton.mixinsquared.adjuster.tools.AdjustableInjectNode;
 import com.bawnorton.mixinsquared.api.MixinAnnotationAdjuster;
 
 public class FixBrokenTargets implements MixinAnnotationAdjuster {
-	private static String applyRefmap(List<String> targetClasses, String mixinClass, String reference) {
-		assert targetClasses.size() >= 1: mixinClass;
-		return applyRefmap(targetClasses.get(0), mixinClass, reference);
-	}
+	private static void insertArguments(String owner, MethodNode method, Type... extra) {
+		assert extra.length > 0; //A waste of time otherwise
+		Type[] args = Type.getArgumentTypes(method.desc);
 
-	@SuppressWarnings("unchecked")
-	private static String applyRefmap(String targetClass, String mixinClass, String reference) {
-		ClassInfo target = ClassInfo.fromCache(targetClass);
-		assert target != null: targetClass + " mixin'd by " + mixinClass;
+		int split = -1, slot = Modifier.isStatic(method.access) ? 0 : 1;
+		for (int i = 0; i < args.length; slot += args[i++].getSize()) {
+			String arg = args[i].getInternalName();
 
-		Set<IMixinInfo> mixins;
-		try {
-			mixins = (Set<IMixinInfo>) FieldUtils.readDeclaredField(target, "mixins", true);
-		} catch (ReflectiveOperationException | ClassCastException e) {
-			throw new RuntimeException("Error trying to read mixins targetting " + target, e);
-		}
-
-		for (IMixinInfo mixin : mixins) {
-			if (mixinClass.equals(mixin.getClassName())) {
-				try {
-					return (String) MethodUtils.invokeMethod(mixin, true, "remapClassName", reference);
-				} catch (InvocationTargetException e) {
-					throw new RuntimeException("Error applying refmap from " + mixin + " to " + reference, e.getCause());
-				} catch (ReflectiveOperationException | ClassCastException e) {
-					throw new RuntimeException("Error trying to apply refmap from " + mixin + " to " + reference, e);
-				}
+			if ("org/spongepowered/asm/mixin/injection/callback/CallbackInfo".equals(arg) ||
+					"org/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable".equals(arg)) {
+				split = i;
+				break;
 			}
 		}
+		assert split >= 0: owner + '#' + method.name + method.desc;
 
-		throw new AssertionError("Unable to find " + mixinClass + " in " + mixins + " (targetting " + target + ')');
-	}
+		args = ArrayUtils.insert(split, args, extra);
+		method.desc = Type.getMethodDescriptor(Type.getReturnType(method.desc), args);
 
-	private static AdjustableAnnotationNode unwrappingSugar(AdjustableAnnotationNode annotation, UnaryOperator<AdjustableAnnotationNode> action) {
-		if ("Lcom/llamalad7/mixinextras/sugar/impl/SugarWrapper;".equals(annotation.desc)) {
-			AnnotationNode realAnnotation = Annotations.getValue(annotation, "original");
-			assert realAnnotation != null: annotation;
-			annotation.set("original", action.apply(AdjustableAnnotationNode.fromNode(realAnnotation)));
-			return annotation;
-		} else {
-			return action.apply(annotation);
+		int shift = 0;
+		for (Type arg : extra) {
+			shift += arg.getSize();
 		}
+
+		for (AbstractInsnNode insn : method.instructions) {
+			if (insn.getType() == AbstractInsnNode.VAR_INSN) {
+				VarInsnNode vin = (VarInsnNode) insn;
+
+				if (vin.var >= slot) vin.var += shift;
+			}
+		}
+		for (LocalVariableNode var : method.localVariables) {
+			if (var.index >= slot) var.index += shift;
+		}
+
+		ClassInfo info = ClassInfo.fromCache(owner);
+		assert info != null: owner;
+		try {
+			MethodUtils.invokeMethod(info, true, "addMethod", method);
+		} catch (InvocationTargetException e) {
+			throw new RuntimeException("Error modifying ClassInfo for " + owner + '#' + method.name + method.desc, e.getCause());
+		} catch (ReflectiveOperationException e) {
+			throw new RuntimeException("Error trying to modify ClassInfo for " + owner + '#' + method.name + method.desc, e);
+		}
+		assert info.findMethod(method, ClassInfo.INCLUDE_ALL) != null: owner + '#' + method.name + method.desc;
 	}
 
 	@Override
 	public AdjustableAnnotationNode adjust(List<String> targetClasses, String mixinClass, MethodNode handler, AdjustableAnnotationNode annotation) {
+		assert !"Lcom/llamalad7/mixinextras/sugar/impl/SugarWrapper;".equals(annotation.desc): mixinClass;
+
 		switch (mixinClass) {
-		case "fuzs.puzzleslib.fabric.mixin.client.ClientLevelFabricMixin": {
+		case "fuzs.puzzleslib.fabric.mixin.client.ClientLevelFabricMixin":
+		case "dev.architectury.mixin.fabric.client.MixinClientLevel": {
 			if (!annotation.is(Inject.class)) break; //Some other kind of injector
 			AdjustableInjectNode inject = annotation.as(AdjustableInjectNode.class);
 			if (!inject.getMethod().contains("<init>")) break; //Some other injection
 
-			Type[] args = Type.getArgumentTypes(handler.desc);
-			Type[] newArgs = new Type[args.length + 2];
-			System.arraycopy(args, 0, newArgs, 0, args.length - 1);
-			newArgs[newArgs.length - 1] = args[args.length - 1];
-			newArgs[args.length] = newArgs[args.length - 1] = Type.getType(List.class);
-			//handler.desc = Type.getMethodDescriptor(Type.VOID_TYPE, newArgs);
+			Type listType = Type.getType(List.class);
+			insertArguments(mixinClass, handler, listType, listType);
+
+			inject.applyRefmap();
+			annotation = inject.withMethod(methods -> {
+				assert methods.size() == 1: methods;
+				String method = methods.get(0);
+
+				assert "Lnet/minecraft/class_638;<init>(Lnet/minecraft/class_634;Lnet/minecraft/class_638$class_5271;Lnet/minecraft/class_5321;Lnet/minecraft/class_6880;IILnet/minecraft/class_761;ZJI)V".equals(method): method;
+				methods.set(0, method.replace("I)", "ILjava/util/List;Ljava/util/List;)"));
+
+				return methods;
+			});
 			break;
 		}
 		case "fuzs.puzzleslib.fabric.mixin.ServerPlayerFabricMixin": {
-			annotation = unwrappingSugar(annotation, node -> {
-				if (!node.is(Inject.class)) return node; //Some other kind of injector
-				AdjustableInjectNode inject = node.as(AdjustableInjectNode.class);
-				if (!inject.getMethod().contains("drop(Z)Z")) return node; //Some other injection
+			if (!annotation.is(Inject.class)) break; //Some other kind of injector
+			AdjustableInjectNode inject = annotation.as(AdjustableInjectNode.class);
+			if (!inject.getMethod().contains("drop(Z)Z")) break; //Some other injection
 
-				return inject.withAt(locations -> {
-					assert locations.size() == 1: locations;
-					AdjustableAtNode at = locations.get(0);
+			annotation = inject.withAt(locations -> {
+				assert locations.size() == 1: locations;
+				AdjustableAtNode at = locations.get(0);
 
-					String target = at.getTarget();
-					assert "Lnet/minecraft/server/level/ServerPlayer;drop(Lnet/minecraft/world/item/ItemStack;ZZ)Lnet/minecraft/world/entity/item/ItemEntity;".equals(target): target;
-					at.setTarget(applyRefmap(targetClasses, mixinClass, target).replace("ZZ)", "ZZZ)"));
+				at.applyRefmap();
+				String target = at.getTarget();
+				assert "Lnet/minecraft/class_3222;method_7329(Lnet/minecraft/class_1799;ZZ)Lnet/minecraft/class_1542;".equals(target): target;
+				at.setTarget(target.replace("ZZ)", "ZZZ)"));
 
-					return locations;
-				});
+				return locations;
 			});
 			break;
 		}
@@ -106,12 +119,15 @@ public class FixBrokenTargets implements MixinAnnotationAdjuster {
 			AdjustableInjectNode inject = annotation.as(AdjustableInjectNode.class);
 			if (!inject.getMethod().contains("respawn")) break; //Some other injection
 
+			insertArguments(mixinClass, handler, Type.getType(Optional.class));
+
+			inject.applyRefmap();
 			annotation = inject.withMethod(methods -> {
 				assert methods.size() == 1: methods;
 				String method = methods.get(0);
 
-				assert "respawn".equals(method): method;
-				methods.set(0, applyRefmap(targetClasses, mixinClass, method).replace(";)", ";Ljava/util/Optional;)"));
+				assert "Lnet/minecraft/class_3324;method_14556(Lnet/minecraft/class_3222;ZLnet/minecraft/class_1297$class_5529;)Lnet/minecraft/class_3222;".equals(method): method;
+				methods.set(0, method.replace(";)", ";Ljava/util/Optional;)"));
 
 				return methods;
 			});
